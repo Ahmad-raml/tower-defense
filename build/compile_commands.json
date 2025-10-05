@@ -1,0 +1,38 @@
+[
+{
+  "directory": "C:/Users/Ahmad/Desktop/tower-defense-starter/build",
+  "command": "C:\\mingw-w64\\mingw64\\bin\\g++.exe  @CMakeFiles/tower_defense.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\tower_defense.dir\\src\\ConsoleGame.cpp.obj -c C:\\Users\\Ahmad\\Desktop\\tower-defense-starter\\src\\ConsoleGame.cpp",
+  "file": "C:/Users/Ahmad/Desktop/tower-defense-starter/src/ConsoleGame.cpp",
+  "output": "CMakeFiles/tower_defense.dir/src/ConsoleGame.cpp.obj"
+},
+{
+  "directory": "C:/Users/Ahmad/Desktop/tower-defense-starter/build",
+  "command": "C:\\mingw-w64\\mingw64\\bin\\g++.exe  @CMakeFiles/tower_defense.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\tower_defense.dir\\src\\Map.cpp.obj -c C:\\Users\\Ahmad\\Desktop\\tower-defense-starter\\src\\Map.cpp",
+  "file": "C:/Users/Ahmad/Desktop/tower-defense-starter/src/Map.cpp",
+  "output": "CMakeFiles/tower_defense.dir/src/Map.cpp.obj"
+},
+{
+  "directory": "C:/Users/Ahmad/Desktop/tower-defense-starter/build",
+  "command": "C:\\mingw-w64\\mingw64\\bin\\g++.exe  @CMakeFiles/tower_defense.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\tower_defense.dir\\src\\ResourceManager.cpp.obj -c C:\\Users\\Ahmad\\Desktop\\tower-defense-starter\\src\\ResourceManager.cpp",
+  "file": "C:/Users/Ahmad/Desktop/tower-defense-starter/src/ResourceManager.cpp",
+  "output": "CMakeFiles/tower_defense.dir/src/ResourceManager.cpp.obj"
+},
+{
+  "directory": "C:/Users/Ahmad/Desktop/tower-defense-starter/build",
+  "command": "C:\\mingw-w64\\mingw64\\bin\\g++.exe  @CMakeFiles/tower_defense.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\tower_defense.dir\\src\\SfmlGame.cpp.obj -c C:\\Users\\Ahmad\\Desktop\\tower-defense-starter\\src\\SfmlGame.cpp",
+  "file": "C:/Users/Ahmad/Desktop/tower-defense-starter/src/SfmlGame.cpp",
+  "output": "CMakeFiles/tower_defense.dir/src/SfmlGame.cpp.obj"
+},
+{
+  "directory": "C:/Users/Ahmad/Desktop/tower-defense-starter/build",
+  "command": "C:\\mingw-w64\\mingw64\\bin\\g++.exe  @CMakeFiles/tower_defense.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\tower_defense.dir\\src\\WaveManager.cpp.obj -c C:\\Users\\Ahmad\\Desktop\\tower-defense-starter\\src\\WaveManager.cpp",
+  "file": "C:/Users/Ahmad/Desktop/tower-defense-starter/src/WaveManager.cpp",
+  "output": "CMakeFiles/tower_defense.dir/src/WaveManager.cpp.obj"
+},
+{
+  "directory": "C:/Users/Ahmad/Desktop/tower-defense-starter/build",
+  "command": "C:\\mingw-w64\\mingw64\\bin\\g++.exe  @CMakeFiles/tower_defense.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\tower_defense.dir\\src\\main.cpp.obj -c C:\\Users\\Ahmad\\Desktop\\tower-defense-starter\\src\\main.cpp",
+  "file": "C:/Users/Ahmad/Desktop/tower-defense-starter/src/main.cpp",
+  "output": "CMakeFiles/tower_defense.dir/src/main.cpp.obj"
+}
+]

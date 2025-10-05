@@ -1,0 +1,10 @@
+# ninja log v7
+49	133	7799289119863429	C:/Users/Ahmad/Desktop/tower-defense-starter/build/CMakeFiles/cmake.verify_globs	fa963f15aeaecdfb
+146	256	7799289120816119	CMakeFiles/tower_defense.dir/src/ResourceManager.cpp.obj	1080cd76ea4004eb
+153	257	7799289120921880	CMakeFiles/tower_defense.dir/src/SfmlGame.cpp.obj	81878fb0d43aba71
+160	583	7799289120991897	CMakeFiles/tower_defense.dir/src/WaveManager.cpp.obj	675642ce52299d46
+140	638	7799289120656079	CMakeFiles/tower_defense.dir/src/Map.cpp.obj	9bc97d534b08401
+134	660	7799289120656079	CMakeFiles/tower_defense.dir/src/ConsoleGame.cpp.obj	78cf08e0f317b005
+175	689	7799289121143681	CMakeFiles/tower_defense.dir/src/main.cpp.obj	ba23f174e827996
+691	838	7799289126285012	tower_defense.exe	1510c95ce6e924df
+44	80	7799289794998454	C:/Users/Ahmad/Desktop/tower-defense-starter/build/CMakeFiles/cmake.verify_globs	fa963f15aeaecdfb

@@ -1,0 +1,3 @@
+C:\mingw-w64\mingw64\bin\cmake.exe -E rm -f CMakeFiles\tower_defense.dir/objects.a
+C:\mingw-w64\mingw64\bin\ar.exe qc CMakeFiles\tower_defense.dir/objects.a @CMakeFiles\tower_defense.dir\objects1.rsp
+C:\mingw-w64\mingw64\bin\g++.exe -g -Wl,--whole-archive CMakeFiles\tower_defense.dir/objects.a -Wl,--no-whole-archive -o tower_defense.exe -Wl,--out-implib,libtower_defense.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\tower_defense.dir\linkLibs.rsp

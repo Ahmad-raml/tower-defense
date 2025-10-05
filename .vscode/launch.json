@@ -1,0 +1,18 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch tower_defense",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/tower_defense",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "externalConsole": true,
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "preLaunchTask": "CMake Build"
+    }
+  ]
+}

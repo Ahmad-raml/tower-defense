@@ -1,0 +1,10 @@
+^C:\USERS\AHMAD\DESKTOP\TOWER-DEFENSE-STARTER\BUILD-MSVC\CMAKEFILES\3E6C560C8A2335BEF2F0D6900ECD22EA\GENERATE.STAMP.RULE
+setlocal
+C:\mingw-w64\mingw64\bin\cmake.exe -SC:/Users/Ahmad/Desktop/tower-defense-starter -BC:/Users/Ahmad/Desktop/tower-defense-starter/build-msvc --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/Ahmad/Desktop/tower-defense-starter/build-msvc/TowerDefenseStarter.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
