@@ -13,6 +13,6 @@ struct Tower {
     float slowFactor=0.5f;         // creature speed multiplier (<=1)
     float slowDuration=1.5f;       // seconds
 
-    // splash tower
+    // splash not overlap tower
     int   splashRadius=1;          // cells around hit target
 };
