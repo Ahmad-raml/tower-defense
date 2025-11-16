@@ -20,10 +20,13 @@ private:
     void handleEvents();
     void update(float dt);
     void render();
+    void updateBullets(float dt);
+    void renderBullets();
 
     sf::RenderWindow window_;
     Map map_;
     WaveManager waves_;
     ResourceManager resources_;
+    std::vector<Bullet> bullets_;
 };
 #endif

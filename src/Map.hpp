@@ -5,14 +5,15 @@
 #include <deque>
 #include "towers/Tower.hpp"   // must include the full type (no forward-decl)
 
-enum class CellType { Path, OpenZone, Spawn, Exit, Resource };
+enum class CellType { Path, OpenZone, Spawn, Exit, Resource, Treasure };
 
 // (single definition of Cell lives below with dirMask)
 
 struct CreatureData {
     int gridX = 0;
     int gridY = 0;
-    bool carrying = false;                 // flipped after reaching resource
+    bool carrying = false;                 // flipped after reaching resource/treasure
+    int targetTreasureIndex = -1;          // which treasure this creature is targeting (-1 = none/resource)
     float hp = 20.0f;                      // health
 
     // movement / status
@@ -76,15 +77,22 @@ public:
     bool hasTowerAt(int cx, int cy) const;
     bool removeTowerAt(int cx, int cy);
 
-    // spawn / exit / resource
+    // spawn / exit / resource / treasure
     const std::vector<std::pair<int,int>>& spawns() const { return spawnCells_; }
     const std::vector<std::pair<int,int>>& exits()  const { return exitCells_;  }
     std::pair<int,int> resource() const { return resourceCell_; }
+    const std::vector<std::pair<int,int>>& treasures() const { return treasureCells_; }
+
+    // treasure gold - get/set gold for a specific treasure by index
+    int treasureGold(int index) const;
+    int& treasureGold(int index);
+    int totalTreasureGold() const; // sum of all treasure gold
 
     // resource units + game over
     int& resourceUnits() { return resourceUnits_; }
     int  resourceUnits() const { return resourceUnits_; }
-    bool isGameOver()    const { return resourceUnits_ <= 0; }
+
+    bool isGameOver()    const { return resourceUnits_ <= 0 || totalTreasureGold() <= 0; }
 
 private:
     int w_, h_, cellPx_;
@@ -94,8 +102,10 @@ private:
 
     std::vector<std::pair<int,int>> spawnCells_;
     std::vector<std::pair<int,int>> exitCells_;
+    std::vector<std::pair<int,int>> treasureCells_;
     std::pair<int,int> resourceCell_{-1,-1};
     int resourceUnits_ = 20;
+    std::vector<int> treasureGold_; // gold for each treasure
 };
 
 #endif // MAP_HPP

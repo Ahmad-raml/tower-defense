@@ -1,6 +1,8 @@
 #include "WaveManager.hpp"
 #include "pathfinding/Pathfinder.hpp"
 #include <algorithm> // std::max
+#include <limits>
+#include <cmath>
 
 void WaveManager::update(float dt, Map& map, std::vector<CreatureData>& creatures)
 {
@@ -49,15 +51,64 @@ void WaveManager::update(float dt, Map& map, std::vector<CreatureData>& creature
 
     // ensure each creature has a path to its current target
     auto ex = exits.front();
+    const auto& treasures = map.treasures();
     for (auto& c : creatures) {
         if (c.gridX < 0) continue; // despawned
         const bool targetIsResource = !c.carrying;
-        int gx = targetIsResource ? res.first  : ex.first;
-        int gy = targetIsResource ? res.second : ex.second;
 
-        if (c.path.empty()) {
+        // Find nearest treasure with gold
+        int bestTreasureIndex = -1;
+        float bestDist = std::numeric_limits<float>::max();
+        if (targetIsResource && !treasures.empty()) {
+            for (size_t i = 0; i < treasures.size(); ++i) {
+                if (map.treasureGold(static_cast<int>(i)) > 0) {
+                    float dx = static_cast<float>(treasures[i].first - c.gridX);
+                    float dy = static_cast<float>(treasures[i].second - c.gridY);
+                    float dist = dx*dx + dy*dy;
+                    if (dist < bestDist) {
+                        bestDist = dist;
+                        bestTreasureIndex = static_cast<int>(i);
+                    }
+                }
+            }
+        }
+
+        int gx, gy;
+        if (targetIsResource && bestTreasureIndex >= 0) {
+            // Target nearest treasure
+            gx = treasures[bestTreasureIndex].first;
+            gy = treasures[bestTreasureIndex].second;
+            c.targetTreasureIndex = bestTreasureIndex;
+        } else if (targetIsResource) {
+            // Target resource
+            gx = res.first;
+            gy = res.second;
+            c.targetTreasureIndex = -1;
+        } else {
+            // Target exit
+            gx = ex.first;
+            gy = ex.second;
+        }
+
+        // If path is empty or target changed (e.g., treasure ran out), recompute path
+        bool needsNewPath = c.path.empty();
+        if (!needsNewPath && targetIsResource) {
+            // Check if we're targeting treasure but it's empty, or targeting resource but treasure is available
+            if (!c.path.empty() && c.targetTreasureIndex >= 0) {
+                auto [nextX, nextY] = c.path.back();
+                const auto& targetTr = treasures[c.targetTreasureIndex];
+                bool currentlyTargetingTreasure = (nextX == targetTr.first && nextY == targetTr.second);
+                bool shouldTargetTreasure = (bestTreasureIndex >= 0);
+                if (currentlyTargetingTreasure != shouldTargetTreasure ||
+                    (shouldTargetTreasure && c.targetTreasureIndex != bestTreasureIndex)) {
+                    needsNewPath = true;
+                }
+            }
+        }
+
+        if (needsNewPath) {
             if (targetIsResource) {
-                // target the single resource cell normally
+                // target treasure or resource
                 c.path = Pathfinder::shortestPath(map, c.gridX, c.gridY, gx, gy, /*ignoreTowers=*/false);
                 if (c.path.empty()) {
                     c.path = Pathfinder::shortestPath(map, c.gridX, c.gridY, gx, gy, /*ignoreTowers=*/true);
@@ -94,14 +145,57 @@ void WaveManager::update(float dt, Map& map, std::vector<CreatureData>& creature
             c.moveAccum -= stepPeriod;
 
             auto [nx, ny] = c.path.front();
+
+            // Check if we're targeting treasure BEFORE we move (check if treasure is in our path)
+            const auto& treasures = map.treasures();
+            bool targetingTreasure = false;
+            int targetTreasureIdx = -1;
+            if (!c.carrying && c.targetTreasureIndex >= 0 && c.targetTreasureIndex < static_cast<int>(treasures.size())) {
+                const auto& tr = treasures[c.targetTreasureIndex];
+                // Check if treasure is the destination (last in path) or anywhere in path
+                if (!c.path.empty()) {
+                    // Check if next step is treasure
+                    if (nx == tr.first && ny == tr.second) {
+                        targetingTreasure = true;
+                        targetTreasureIdx = c.targetTreasureIndex;
+                    } else {
+                        // Check if treasure is anywhere in remaining path
+                        for (const auto& [px, py] : c.path) {
+                            if (px == tr.first && py == tr.second) {
+                                targetingTreasure = true;
+                                targetTreasureIdx = c.targetTreasureIndex;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
             c.path.pop_front();
             c.gridX = nx;
             c.gridY = ny;
 
-            // reached resource: steal one unit, then retarget to exit
-            if (!c.carrying && nx == res.first && ny == res.second) {
+            // reached treasure: steal gold, then retarget to exit
+            if (!c.carrying && targetTreasureIdx >= 0 && targetTreasureIdx < static_cast<int>(treasures.size())) {
+                const auto& tr = treasures[targetTreasureIdx];
+                if (nx == tr.first && ny == tr.second) {
+                    if (map.treasureGold(targetTreasureIdx) > 0) {
+                        c.carrying = true;
+                        c.path.clear();
+                        int gold = map.treasureGold(targetTreasureIdx);
+                        map.treasureGold(targetTreasureIdx) = std::max(0, gold - 5); // steal 5 gold per creature
+                    } else {
+                        // Treasure is empty, retarget to resource
+                        c.path.clear();
+                        c.targetTreasureIndex = -1;
+                    }
+                }
+            }
+            // reached resource: steal one unit, then retarget to exit (only if not targeting treasure)
+            else if (!c.carrying && !targetingTreasure && nx == res.first && ny == res.second) {
                 c.carrying = true;
                 c.path.clear();
+                c.targetTreasureIndex = -1;
                 int left = map.resourceUnits();
                 map.resourceUnits() = std::max(0, left - 1);
             }
