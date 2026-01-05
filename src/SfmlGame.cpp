@@ -6,9 +6,16 @@
 #include <cmath>
 #include <string>
 #include <vector>
+#include <iostream>
+
+
+
 
 // Costs & rewards
-static const Cost kBasicCost{1,0,0};
+static const Cost kBasicCost{ 1, 0, 0 }; // A
+static const Cost kSlowCost{ 1, 1, 0 }; // A + B
+static const Cost kSplashCost{ 1, 1, 1 }; // A + B + C
+
 static const Cost kKillReward{1,0,0};
 static const float kSellRefund = 0.5f; // 50%
 
@@ -17,7 +24,9 @@ SfmlGame::SfmlGame(unsigned w, unsigned h, const char* title)
     sf::VideoMode mode({w, h}, 32);   // SFML 3: size + bitsPerPixel
     window_.create(mode, title);
     window_.setFramerateLimit(60);
-    resources_.add(40, 0, 0);         // seed materials
+    resources_.add(34, 12, 6);         // seed materials
+    paused_ = true;     // start game paused
+    showHelp_ = true;   // show help overlay
 }
 
 void SfmlGame::run() {
@@ -37,6 +46,11 @@ void SfmlGame::handleEvents() {
             continue;
         }
         if (auto* k = evt->getIf<sf::Event::KeyPressed>()) {
+            if (showHelp_) {
+                showHelp_ = false;
+                paused_ = false;
+                return;
+            }
             if (k->code == sf::Keyboard::Key::P) paused_ = !paused_;
             if (k->code == sf::Keyboard::Key::Num1) selectedType = 1;
             if (k->code == sf::Keyboard::Key::Num2) selectedType = 2;
@@ -55,24 +69,45 @@ void SfmlGame::handleEvents() {
             }
 
             if (m->button == sf::Mouse::Button::Left) {
-                if (map_.isBuildable(cx, cy) && !map_.hasTowerAt(cx,cy) && resources_.canAfford(kBasicCost)) {
-                    if (map_.placeTower(cx, cy) && resources_.spend(kBasicCost)) {
+                Cost cost;
+                if (selectedType == 1)      cost = kBasicCost;
+                else if (selectedType == 2) cost = kSlowCost;
+                else                        cost = kSplashCost;
+
+                if (map_.isBuildable(cx, cy) && !map_.hasTowerAt(cx, cy) && resources_.canAfford(cost)) {
+                    if (map_.placeTower(cx, cy) && resources_.spend(cost)) {
                         Tower t{};
                         t.cx = cx; t.cy = cy;
                         if (selectedType == 1) { // Basic
-                            t.type = TowerType::Basic;  t.rangeCells = 3.0f; t.dps = 8.0f; t.fireRate = 1.5f;
+                            t.type = TowerType::Basic;  t.rangeCells = 3.0f; t.dps = 6.0f; t.fireRate = 1.5f;
                         } else if (selectedType == 2) { // Slow
                             t.type = TowerType::Slow;   t.rangeCells = 3.0f; t.dps = 0.0f; t.fireRate = 2.0f; t.slowFactor = 0.5f; t.slowDuration = 1.5f;
                         } else { // Splash
                             t.type = TowerType::Splash; t.rangeCells = 3.0f; t.dps = 6.0f; t.fireRate = 1.0f; t.splashRadius = 1;
                         }
+
+                        if (t.type == TowerType::Basic)   t.level = 1;
+                        if (t.type == TowerType::Slow)    t.level = 2;
+                        if (t.type == TowerType::Splash) t.level = 3;
+
                         map_.addTower(t);
                         for (auto& cr : map_.creatures()) cr.path.clear(); // force recompute if needed
                     }
                 }
-            } else if (m->button == sf::Mouse::Button::Right) {
+			}
+			else if (m->button == sf::Mouse::Button::Right) { //refund materials per tower type
                 if (map_.removeTowerAt(cx, cy)) {
-                    resources_.add(static_cast<int>(kBasicCost.A * kSellRefund), 0, 0);
+                    Cost refund;
+                    if (selectedType == 1)      refund = kBasicCost;
+                    else if (selectedType == 2) refund = kSlowCost;
+                    else                        refund = kSplashCost;
+
+                    resources_.add(
+                        static_cast<int>(refund.A * kSellRefund),
+                        static_cast<int>(refund.B * kSellRefund),
+                        static_cast<int>(refund.C * kSellRefund)
+                    );
+
                     for (auto& cr : map_.creatures()) cr.path.clear();
                 }
             }
@@ -313,6 +348,51 @@ void SfmlGame::render() {
             }
         }
     }
+
+    if (showHelp_) {
+
+        sf::RectangleShape panel(sf::Vector2f(460.f, 280.f));
+        panel.setFillColor(sf::Color(20, 20, 20, 220));
+        panel.setOutlineColor(sf::Color::White);
+        panel.setOutlineThickness(2.f);
+        panel.setPosition(sf::Vector2f(40.f, 40.f));
+        window_.draw(panel);
+
+        
+
+        static sf::Font font;
+        static bool loaded = false;
+
+        if (!loaded) {
+            if (!font.openFromFile("assets/Roboto-Regular.ttf")) {
+                std::cerr << "ERROR: font not found\n";
+            }
+            loaded = true;
+        }
+
+        sf::Text text(
+            font,
+            "HOW TO PLAY\n\n"
+            "1 / 2 / 3  - Select tower\n"
+            "Left Click - Place tower\n"
+            "Right Click - Remove tower\n"
+            "R           - Show ranges\n"
+            "V           - Show paths\n"
+            "P           - Pause game\n\n"
+            "Press any key to start",
+            18
+        );
+
+        text.setFillColor(sf::Color::White);
+        text.setPosition(sf::Vector2f(55.f, 55.f));
+
+        window_.draw(text);
+
+
+    }
+
+
+
     window_.display();
 }
 #endif

@@ -1,3 +1,0 @@
-C:/Users/Ahmad/Desktop/tower-defense-starter/build-msvc/CMakeFiles/tower_defense.dir
-C:/Users/Ahmad/Desktop/tower-defense-starter/build-msvc/CMakeFiles/ALL_BUILD.dir
-C:/Users/Ahmad/Desktop/tower-defense-starter/build-msvc/CMakeFiles/ZERO_CHECK.dir

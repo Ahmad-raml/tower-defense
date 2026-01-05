@@ -26,14 +26,14 @@ void WaveManager::update(float dt, Map& map, std::vector<CreatureData>& creature
                 betweenTimer_ = 0.0f;
                 spawned_ = 0;
                 ++waveNo_;
-                toSpawn_ = std::min(5 + waveNo_, 20); // slight ramp
+                toSpawn_ = 10 + waveNo_ * 4;
             }
         }
         // No spawns during inter-wave pause
     } else {
-        // spawn creatures every ~2s
+        // spawn creatures every ~1.5s
         spawnTimer_ += dt;
-        if (spawnTimer_ > 2.0f && spawned_ < toSpawn_) {
+        if (spawnTimer_ > 1.5f && spawned_ < toSpawn_) {
             spawnTimer_ = 0.0f;
             // cycle through multiple spawns if available
             static size_t spawnIndex = 0;
@@ -43,7 +43,7 @@ void WaveManager::update(float dt, Map& map, std::vector<CreatureData>& creature
             c.gridX = s.first;
             c.gridY = s.second;
             // Scale HP a little by wave
-            c.hp = 20.0f + (waveNo_ - 1) * 6.0f;
+            c.hp = 80.0f + (waveNo_ - 1) * 10.0f;
             creatures.push_back(c);
             ++spawned_;
         }

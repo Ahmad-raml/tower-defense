@@ -21,7 +21,7 @@ struct CreatureData {
     float slowTimer = 0.0f;                // remaining slow duration (seconds)
     float moveAccum = 0.0f;                // per-creature movement accumulator
 
-    std::deque<std::pair<int,int>> path;
+    std::deque<std::pair<int, int>> path;
 };
 
 enum DirBits : uint8_t {
@@ -49,7 +49,7 @@ class Map {
 public:
 
     void neighbors(int x, int y, bool ignoreTowers,
-               std::vector<std::pair<int,int>>& out) const;
+        std::vector<std::pair<int, int>>& out) const;
     Map(int w, int h, int cellPx);
 
     int width()  const { return w_; }
@@ -61,9 +61,9 @@ public:
     bool isPath(int x, int y) const;
 
     const Cell& at(int x, int y) const;
-    Cell&       at(int x, int y);
+    Cell& at(int x, int y);
 
-    std::vector<CreatureData>&       creatures()       { return creatures_; }
+    std::vector<CreatureData>& creatures() { return creatures_; }
     const std::vector<CreatureData>& creatures() const { return creatures_; }
 
 #ifdef HAVE_SFML
@@ -78,10 +78,10 @@ public:
     bool removeTowerAt(int cx, int cy);
 
     // spawn / exit / resource / treasure
-    const std::vector<std::pair<int,int>>& spawns() const { return spawnCells_; }
-    const std::vector<std::pair<int,int>>& exits()  const { return exitCells_;  }
-    std::pair<int,int> resource() const { return resourceCell_; }
-    const std::vector<std::pair<int,int>>& treasures() const { return treasureCells_; }
+    const std::vector<std::pair<int, int>>& spawns() const { return spawnCells_; }
+    const std::vector<std::pair<int, int>>& exits()  const { return exitCells_; }
+    std::pair<int, int> resource() const { return resourceCell_; }
+    const std::vector<std::pair<int, int>>& treasures() const { return treasureCells_; }
 
     // treasure gold - get/set gold for a specific treasure by index
     int treasureGold(int index) const;
@@ -100,10 +100,10 @@ private:
     std::vector<CreatureData> creatures_;
     std::vector<Tower> towers_;
 
-    std::vector<std::pair<int,int>> spawnCells_;
-    std::vector<std::pair<int,int>> exitCells_;
-    std::vector<std::pair<int,int>> treasureCells_;
-    std::pair<int,int> resourceCell_{-1,-1};
+    std::vector<std::pair<int, int>> spawnCells_;
+    std::vector<std::pair<int, int>> exitCells_;
+    std::vector<std::pair<int, int>> treasureCells_;
+    std::pair<int, int> resourceCell_{ -1,-1 };
     int resourceUnits_ = 20;
     std::vector<int> treasureGold_; // gold for each treasure
 };

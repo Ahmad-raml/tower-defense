@@ -16,6 +16,8 @@ private:
     int  selectedType = 1; // 1=Basic, 2=Slow, 3=Splash
     bool showRanges_ = false;  // UI overlay: tower ranges
     bool showRoutes_ = false; // UI overlay: creature planned routes (V to toggle)
+	bool showHelp_ = true;   // UI overlay: help text
+
 
     void handleEvents();
     void update(float dt);

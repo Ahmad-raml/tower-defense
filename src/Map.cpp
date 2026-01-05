@@ -1,4 +1,4 @@
-#include "Map.hpp"
+﻿#include "Map.hpp"
 #include <cassert>
 #include "towers/Tower.hpp"
 
@@ -7,90 +7,111 @@ Map::Map(int w, int h, int cellPx) : w_(w), h_(h), cellPx_(cellPx) {
     cells_.reserve(w_ * h_);
     for (int y = 0; y < h_; ++y) {
         for (int x = 0; x < w_; ++x) {
-            cells_.push_back({x, y, CellType::OpenZone, false});
+            cells_.push_back({ x, y, CellType::OpenZone, false });
         }
     }
 
-    // create a single spawn with a fork into two branches that rejoin at the resource
+    
+    // Global reference points
     int yMid = h_ / 2;
-    int rx = w_ / 2;
+    int xSpawn = 0;
+    int xResource = w_ / 2;
+    int xExit = w_ - 1;
 
-    // mark resource and exit first
-    cells_[yMid * w_ + rx].type = CellType::Resource;
-    resourceCell_ = {rx, yMid};
-    cells_[yMid * w_ + (w_ - 1)].type = CellType::Exit;
-    exitCells_.push_back({w_ - 1, yMid});
+	// Spawn, resource and exit cells
+    cells_[yMid * w_ + xSpawn].type = CellType::Spawn;
+    spawnCells_.push_back({ xSpawn, yMid });
 
-    // spawn at left middle
-    cells_[yMid * w_ + 0].type = CellType::Spawn;
-    spawnCells_.push_back({0, yMid});
+    cells_[yMid * w_ + xResource].type = CellType::Resource;
+    resourceCell_ = { xResource, yMid };
 
-    // short upper branch: from spawn to junction, go up, across, then down into resource
-    int junctionX = 2;
-    int yu = std::max(0, yMid - 2); // make upper branch shorter
-    for (int x = 1; x <= junctionX; ++x) cells_[yMid * w_ + x].type = CellType::Path; // to junction (keep spawn at x=0)
-    for (int y = yMid - 1; y >= yu; --y) cells_[y * w_ + junctionX].type = CellType::Path; // up
-    for (int x = junctionX; x <= rx; ++x) cells_[yu * w_ + x].type = CellType::Path; // across
-    for (int y = yu + 1; y <= yMid; ++y) cells_[y * w_ + rx].type = CellType::Path; // down into resource
+    cells_[yMid * w_ + xExit].type = CellType::Exit;
+    exitCells_.push_back({ xExit, yMid });
 
-    // longer lower branch: down further, across, then up to just left of resource and into it
-    int yl = std::min(h_ - 1, yMid + 5); // make lower branch longer
-    for (int y = yMid + 1; y <= yl; ++y) cells_[y * w_ + junctionX].type = CellType::Path; // down
-    for (int x = junctionX; x <= rx - 1; ++x) cells_[yl * w_ + x].type = CellType::Path; // across
-    for (int y = yl; y >= yMid; --y) cells_[y * w_ + (rx - 1)].type = CellType::Path; // up
-    cells_[yMid * w_ + rx].type = CellType::Resource; // ensure resource stays
+	// Shared path segment: spawn to choke point
+    int chokeX = 2;
+    for (int x = 1; x <= chokeX; ++x)
+        cells_[yMid * w_ + x].type = CellType::Path;
 
-    // Place multiple castles (treasures) on different routes
-    // Castle 1: on main path after resource
-    int tx1 = rx + 3;
-    if (tx1 < w_ - 1) {
-        cells_[yMid * w_ + tx1].type = CellType::Treasure;
-        treasureCells_.push_back({tx1, yMid});
-        treasureGold_.push_back(100);
+    
+    // ROUTE 1 — VERY SHORT / VERY DANGEROUS (TOP)
+
+    int yTop1 = std::max(1, yMid - 2);
+
+    for (int y = yMid - 1; y >= yTop1; --y)
+        cells_[y * w_ + chokeX].type = CellType::Path;
+
+    for (int x = chokeX; x <= xResource; ++x)
+        cells_[yTop1 * w_ + x].type = CellType::Path;
+
+    for (int y = yTop1 + 1; y <= yMid; ++y)
+        cells_[y * w_ + xResource].type = CellType::Path;
+
+    cells_[yTop1 * w_ + (xResource - 1)].type = CellType::Treasure;
+    treasureCells_.push_back({ xResource - 1, yTop1 });
+    treasureGold_.push_back(120);
+
+    // ROUTE 2 — LONG SAFE LOOP (BOTTOM)
+    int yBottom = std::min(h_ - 2, yMid + 5);
+
+    for (int y = yMid + 1; y <= yBottom; ++y)
+        cells_[y * w_ + chokeX].type = CellType::Path;
+
+    for (int x = chokeX; x <= xResource - 1; ++x)
+        cells_[yBottom * w_ + x].type = CellType::Path;
+
+    for (int y = yBottom; y >= yMid; --y)
+        cells_[y * w_ + (xResource - 1)].type = CellType::Path;
+
+    cells_[yBottom * w_ + (xResource - 2)].type = CellType::Treasure;
+    treasureCells_.push_back({ xResource - 2, yBottom });
+    treasureGold_.push_back(80);
+
+   
+    // ROUTE 3 — ZIG-ZAG (ANTI-SPLASH)
+   
+    int yZ = yMid - 1;
+
+    for (int x = chokeX; x <= chokeX + 2; ++x)
+        cells_[yZ * w_ + x].type = CellType::Path;
+
+    for (int y = yZ; y <= yZ + 2; ++y)
+        cells_[y * w_ + (chokeX + 2)].type = CellType::Path;
+
+    for (int x = chokeX + 2; x <= xResource; ++x)
+        cells_[(yZ + 2) * w_ + x].type = CellType::Path;
+
+    for (int y = yZ + 2; y >= yMid; --y)
+        cells_[y * w_ + xResource].type = CellType::Path;
+
+    cells_[(yZ + 2) * w_ + (xResource - 1)].type = CellType::Treasure;
+    treasureCells_.push_back({ xResource - 1, yZ + 2 });
+    treasureGold_.push_back(100);
+
+    // ROUTE 4 — FAST CENTRAL LANE (LOW REWARD)
+    
+    for (int x = chokeX; x <= xResource; ++x)
+        cells_[yMid * w_ + x].type = CellType::Path;
+
+    cells_[yMid * w_ + (xResource - 1)].type = CellType::Treasure;
+    treasureCells_.push_back({ xResource - 1, yMid });
+    treasureGold_.push_back(50);
+
+    // RESOURCE TO EXIT (COMMON FINAL SEGMENT)
+   
+    for (int x = xResource; x < xExit; ++x) {
+        if (cells_[yMid * w_ + x].type != CellType::Treasure)
+            cells_[yMid * w_ + x].type = CellType::Path;
     }
 
-    // Castle 2: on upper branch
-    int tx2 = rx - 1;
-    if (tx2 > 0 && yu >= 0) {
-        cells_[yu * w_ + tx2].type = CellType::Treasure;
-        treasureCells_.push_back({tx2, yu});
-        treasureGold_.push_back(100);
-    }
-
-    // Castle 3: on lower branch
-    int tx3 = rx - 1;
-    if (tx3 > 0 && yl < h_) {
-        cells_[yl * w_ + tx3].type = CellType::Treasure;
-        treasureCells_.push_back({tx3, yl});
-        treasureGold_.push_back(100);
-    }
-
-    // path from resource to exit along the mid row
-    for (int x = rx; x < w_; ++x) {
-        // Don't overwrite treasure or exit
-        bool isTreasure = false;
-        for (const auto& tr : treasureCells_) {
-            if (x == tr.first && yMid == tr.second) {
-                cells_[yMid * w_ + x].type = CellType::Treasure;
-                isTreasure = true;
-                break;
-            }
-        }
-        if (!isTreasure) {
-            if (x == w_ - 1) {
-                cells_[yMid * w_ + x].type = CellType::Exit; // keep exit
-            } else {
-                cells_[yMid * w_ + x].type = CellType::Path;
-            }
-        }
-    }
-
-    // spawn one demo creature on the spawn cell; give it a straight path
+	// Demo creature at spawn
+    
     CreatureData c;
-    c.gridX = 0; c.gridY = yMid;
-    // leave path empty so runtime pathfinder chooses the current shortest branch
+    c.gridX = xSpawn;
+    c.gridY = yMid;
     creatures_.push_back(c);
 }
+
 
 int Map::treasureGold(int index) const {
     if (index >= 0 && index < static_cast<int>(treasureGold_.size())) {
@@ -173,33 +194,33 @@ void Map::draw(sf::RenderWindow& win) const {
     // Lazy-load textures (optional). If files are missing, fall back to vector shapes.
     static bool texTried = false;
     static sf::Texture texGrass, texDirt, texSpawn, texExit, texResource, texTreasure, texTowerBasic, texTowerSlow, texTowerSplash, texCreature;
-    static bool hasGrassTex=false, hasDirtTex=false, hasSpawnTex=false, hasExitTex=false, hasResourceTex=false, hasTreasureTex=false,
-                hasBasicTex=false, hasSlowTex=false, hasSplashTex=false, hasCreatureTex=false;
+    static bool hasGrassTex = false, hasDirtTex = false, hasSpawnTex = false, hasExitTex = false, hasResourceTex = false, hasTreasureTex = false,
+        hasBasicTex = false, hasSlowTex = false, hasSplashTex = false, hasCreatureTex = false;
     if (!texTried) {
         texTried = true;
         auto tryLoad = [](sf::Texture& tex, const char* p1, const char* p2) -> bool {
             if (tex.loadFromFile(p1)) return true;
             return tex.loadFromFile(p2);
-        };
+            };
 
-        hasGrassTex    = tryLoad(texGrass,       "assets/grass.png",        "src/assets/grass.png");
-        hasDirtTex     = tryLoad(texDirt,        "assets/dirt.png",         "src/assets/dirt.png");
-        hasSpawnTex    = tryLoad(texSpawn,       "assets/spawn.png",        "src/assets/spawn.png");
-        hasExitTex     = tryLoad(texExit,        "assets/exit.png",         "src/assets/exit.png");
-        hasResourceTex = tryLoad(texResource,    "assets/resource.png",     "src/assets/resource.png");
-        hasTreasureTex = tryLoad(texTreasure,    "assets/treasure.png",     "src/assets/treasure.png");
-        hasBasicTex    = tryLoad(texTowerBasic,  "assets/tower_basic.png",  "src/assets/tower_basic.png");
-        hasSlowTex     = tryLoad(texTowerSlow,   "assets/tower_slow.png",   "src/assets/tower_slow.png");
-        hasSplashTex   = tryLoad(texTowerSplash, "assets/tower_splash.png", "src/assets/tower_splash.png");
-        hasCreatureTex = tryLoad(texCreature,    "assets/creature.png",     "src/assets/creature.png");
+        hasGrassTex = tryLoad(texGrass, "assets/grass.png", "src/assets/grass.png");
+        hasDirtTex = tryLoad(texDirt, "assets/dirt.png", "src/assets/dirt.png");
+        hasSpawnTex = tryLoad(texSpawn, "assets/spawn.png", "src/assets/spawn.png");
+        hasExitTex = tryLoad(texExit, "assets/exit.png", "src/assets/exit.png");
+        hasResourceTex = tryLoad(texResource, "assets/resource.png", "src/assets/resource.png");
+        hasTreasureTex = tryLoad(texTreasure, "assets/treasure.png", "src/assets/treasure.png");
+        hasBasicTex = tryLoad(texTowerBasic, "assets/tower_basic.png", "src/assets/tower_basic.png");
+        hasSlowTex = tryLoad(texTowerSlow, "assets/tower_slow.png", "src/assets/tower_slow.png");
+        hasSplashTex = tryLoad(texTowerSplash, "assets/tower_splash.png", "src/assets/tower_splash.png");
+        hasCreatureTex = tryLoad(texCreature, "assets/creature.png", "src/assets/creature.png");
     }
 
     sf::RectangleShape tile(sf::Vector2f(static_cast<float>(cellPx_), static_cast<float>(cellPx_)));
     sf::RectangleShape gridLine;
-    gridLine.setFillColor(sf::Color(0,0,0,50));
+    gridLine.setFillColor(sf::Color(0, 0, 0, 50));
 
     for (const auto& c : cells_) {
-        auto drawCellSprite = [&](const sf::Texture& tex){
+        auto drawCellSprite = [&](const sf::Texture& tex) {
             sf::Sprite spr(tex);
             const auto sz = tex.getSize();
             if (sz.x > 0 && sz.y > 0) {
@@ -209,32 +230,38 @@ void Map::draw(sf::RenderWindow& win) const {
             }
             spr.setPosition(sf::Vector2f(static_cast<float>(c.x * cellPx_), static_cast<float>(c.y * cellPx_)));
             win.draw(spr);
-        };
+            };
 
         bool drewSprite = false;
         if (c.type == CellType::OpenZone && hasGrassTex) {
             drawCellSprite(texGrass); drewSprite = true;
-        } else if ((c.type == CellType::Path) && hasDirtTex) {
+        }
+        else if ((c.type == CellType::Path) && hasDirtTex) {
             drawCellSprite(texDirt); drewSprite = true;
-        } else if (c.type == CellType::Spawn && hasSpawnTex) {
+        }
+        else if (c.type == CellType::Spawn && hasSpawnTex) {
             drawCellSprite(texSpawn); drewSprite = true;
-        } else if (c.type == CellType::Exit && hasExitTex) {
+        }
+        else if (c.type == CellType::Exit && hasExitTex) {
             drawCellSprite(texExit); drewSprite = true;
-        } else if (c.type == CellType::Resource && hasResourceTex) {
+        }
+        else if (c.type == CellType::Resource && hasResourceTex) {
             drawCellSprite(texResource); drewSprite = true;
-        } else if (c.type == CellType::Treasure && hasTreasureTex) {
+        }
+        else if (c.type == CellType::Treasure && hasTreasureTex) {
             drawCellSprite(texTreasure); drewSprite = true;
-        } else {
+        }
+        else {
             tile.setPosition(sf::Vector2f(static_cast<float>(c.x * cellPx_), static_cast<float>(c.y * cellPx_)));
             switch (c.type) {
-                case CellType::Path:     tile.setFillColor(sf::Color(85, 85, 95));  break;
-                case CellType::OpenZone: tile.setFillColor(sf::Color(30, 40, 50));  break;
-                case CellType::Spawn:    tile.setFillColor(sf::Color(0, 140, 20));  break;
-                case CellType::Exit:     tile.setFillColor(sf::Color(160, 30, 30)); break;
-                case CellType::Resource: tile.setFillColor(sf::Color(210, 170, 20));break;
-                case CellType::Treasure: tile.setFillColor(sf::Color(255, 215, 0));  break; // gold color
+            case CellType::Path:     tile.setFillColor(sf::Color(85, 85, 95));  break;
+            case CellType::OpenZone: tile.setFillColor(sf::Color(30, 40, 50));  break;
+            case CellType::Spawn:    tile.setFillColor(sf::Color(0, 140, 20));  break;
+            case CellType::Exit:     tile.setFillColor(sf::Color(160, 30, 30)); break;
+            case CellType::Resource: tile.setFillColor(sf::Color(210, 170, 20)); break;
+            case CellType::Treasure: tile.setFillColor(sf::Color(255, 215, 0));  break; // gold color
             }
-            if (c.blocked) tile.setFillColor(sf::Color(120,120,160));
+            if (c.blocked) tile.setFillColor(sf::Color(120, 120, 160));
             win.draw(tile);
         }
     }
@@ -254,7 +281,7 @@ void Map::draw(sf::RenderWindow& win) const {
     // towers: sprites if available, else vector glyphs
     for (const auto& t : towers_) {
         bool drew = false;
-        auto drawTowerSprite = [&](const sf::Texture& tex){
+        auto drawTowerSprite = [&](const sf::Texture& tex) {
             sf::Sprite spr(tex);
             const auto sz = tex.getSize();
             if (sz.x > 0 && sz.y > 0) {
@@ -262,13 +289,13 @@ void Map::draw(sf::RenderWindow& win) const {
                 float scale = std::min(target / static_cast<float>(sz.x), target / static_cast<float>(sz.y));
                 spr.setScale(sf::Vector2f(scale, scale));
                 // center origin and place at cell center
-            const auto lb = spr.getLocalBounds();
-            spr.setOrigin(sf::Vector2f(lb.size.x * 0.5f, lb.size.y * 0.5f));
+                const auto lb = spr.getLocalBounds();
+                spr.setOrigin(sf::Vector2f(lb.size.x * 0.5f, lb.size.y * 0.5f));
                 spr.setPosition(sf::Vector2f(static_cast<float>(t.cx * cellPx_ + cellPx_ / 2),
-                                             static_cast<float>(t.cy * cellPx_ + cellPx_ / 2)));
+                    static_cast<float>(t.cy * cellPx_ + cellPx_ / 2)));
             }
             win.draw(spr);
-        };
+            };
 
         if (t.type == TowerType::Basic && hasBasicTex) { drawTowerSprite(texTowerBasic); drew = true; }
         else if (t.type == TowerType::Slow && hasSlowTex) { drawTowerSprite(texTowerSlow); drew = true; }
@@ -276,7 +303,7 @@ void Map::draw(sf::RenderWindow& win) const {
         if (!drew) {
             float cx = static_cast<float>(t.cx * cellPx_ + cellPx_ / 2);
             float cy = static_cast<float>(t.cy * cellPx_ + cellPx_ / 2);
-            float r  = static_cast<float>(cellPx_) * 0.28f;
+            float r = static_cast<float>(cellPx_) * 0.28f;
             sf::CircleShape base(r);
             base.setOrigin(sf::Vector2f(r, r));
             base.setPosition(sf::Vector2f(cx, cy));
@@ -288,7 +315,8 @@ void Map::draw(sf::RenderWindow& win) const {
                 barrel.setPosition(sf::Vector2f(cx, cy));
                 barrel.setFillColor(sf::Color(60, 60, 70));
                 win.draw(barrel);
-            } else if (t.type == TowerType::Slow) {
+            }
+            else if (t.type == TowerType::Slow) {
                 sf::RectangleShape arm(sf::Vector2f(r * 1.4f, r * 0.22f));
                 arm.setOrigin(sf::Vector2f(r * 0.7f, r * 0.11f));
                 arm.setPosition(sf::Vector2f(cx, cy));
@@ -296,7 +324,8 @@ void Map::draw(sf::RenderWindow& win) const {
                 win.draw(arm);
                 arm.setRotation(sf::degrees(90.f));
                 win.draw(arm);
-            } else {
+            }
+            else {
                 sf::ConvexShape star;
                 star.setPointCount(4);
                 star.setPoint(0, sf::Vector2f(cx, cy - r));
@@ -322,12 +351,13 @@ void Map::draw(sf::RenderWindow& win) const {
                 const auto lb = spr.getLocalBounds();
                 spr.setOrigin(sf::Vector2f(lb.size.x * 0.5f, lb.size.y * 0.5f));
                 spr.setPosition(sf::Vector2f(static_cast<float>(cr.gridX * cellPx_ + cellPx_ / 2),
-                                             static_cast<float>(cr.gridY * cellPx_ + cellPx_ / 2)));
+                    static_cast<float>(cr.gridY * cellPx_ + cellPx_ / 2)));
             }
             // Tint gold if carrying
             if (cr.carrying) {
                 spr.setColor(sf::Color(255, 215, 0)); // gold tint
-            } else {
+            }
+            else {
                 spr.setColor(sf::Color::White); // reset to white
             }
             win.draw(spr);
@@ -338,23 +368,25 @@ void Map::draw(sf::RenderWindow& win) const {
                 goldIndicator.setFillColor(sf::Color(255, 255, 0));
                 goldIndicator.setOrigin(sf::Vector2f(static_cast<float>(cellPx_) * 0.15f, static_cast<float>(cellPx_) * 0.15f));
                 goldIndicator.setPosition(sf::Vector2f(static_cast<float>(cr.gridX * cellPx_ + cellPx_ / 2),
-                                                       static_cast<float>(cr.gridY * cellPx_ + cellPx_ * 0.2f)));
+                    static_cast<float>(cr.gridY * cellPx_ + cellPx_ * 0.2f)));
                 win.draw(goldIndicator);
             }
         }
-    } else {
+    }
+    else {
         // fallback: existing circle rendering
         for (const auto& cr : creatures_) {
             if (cr.gridX < 0) continue; // despawned
             sf::CircleShape shape(static_cast<float>(cellPx_) * 0.4f);
             shape.setOrigin(sf::Vector2f(static_cast<float>(cellPx_) * 0.4f,
-                                         static_cast<float>(cellPx_) * 0.4f));
+                static_cast<float>(cellPx_) * 0.4f));
             shape.setPosition(sf::Vector2f(static_cast<float>(cr.gridX * cellPx_ + cellPx_ / 2),
-                                           static_cast<float>(cr.gridY * cellPx_ + cellPx_ / 2)));
+                static_cast<float>(cr.gridY * cellPx_ + cellPx_ / 2)));
             // Change color if carrying gold
             if (cr.carrying) {
                 shape.setFillColor(sf::Color(255, 215, 0)); // gold
-            } else {
+            }
+            else {
                 shape.setFillColor(sf::Color(200, 100, 100)); // normal creature color
             }
             win.draw(shape);
@@ -365,7 +397,7 @@ void Map::draw(sf::RenderWindow& win) const {
                 goldIndicator.setFillColor(sf::Color(255, 255, 0));
                 goldIndicator.setOrigin(sf::Vector2f(static_cast<float>(cellPx_) * 0.15f, static_cast<float>(cellPx_) * 0.15f));
                 goldIndicator.setPosition(sf::Vector2f(static_cast<float>(cr.gridX * cellPx_ + cellPx_ / 2),
-                                                       static_cast<float>(cr.gridY * cellPx_ + cellPx_ * 0.2f)));
+                    static_cast<float>(cr.gridY * cellPx_ + cellPx_ * 0.2f)));
                 win.draw(goldIndicator);
             }
         }
@@ -392,4 +424,3 @@ void Map::draw(sf::RenderWindow& win) const {
     }
 }
 #endif
-

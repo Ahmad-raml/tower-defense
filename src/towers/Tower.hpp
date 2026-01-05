@@ -5,9 +5,12 @@ struct Tower {
     int cx=0, cy=0;                // cell coords
     TowerType type=TowerType::Basic;
 
+    int level = 1;
+
+
     // common
     float rangeCells=3.0f;         // detection radius
-    float dps=8.0f;                // damage per second
+    float dps=6.0f;                // damage per second
     float fireCooldown=0.0f;       // time until can fire again
     float fireRate=1.0f;           // shots per second
 
